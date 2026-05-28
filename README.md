@@ -116,17 +116,6 @@ Shows all stock movements with running balance.
 ## Moving Average Valuation
 <img width="729" height="481" alt="Screenshot 2026-05-28 150720" src="https://github.com/user-attachments/assets/79abe5e1-84c7-4c9d-b989-c444dbe68ae0" />
 
-
-Moving average is calculated using a **single SQL query**:
-
-```sql
-SELECT 
-    item,
-    AVG(CASE WHEN incoming_rate > 0 
-             THEN incoming_rate 
-             ELSE NULL END) as moving_average_rate
-FROM `tabX Stock Ledger Entry`
-GROUP BY item
 This ensures:
 
 Only receipts affect the moving average
@@ -178,161 +167,6 @@ Migrate and restart:
 bash
 bench migrate
 bench restart
-Frappe Cloud Installation
-Adding the App to Your Bench:
-
-Log Into Frappe Cloud Dashboard - Access your account on Frappe Cloud
-
-Navigate to your Bench Apps Section - Click on the Apps tab
-
-Add New App - Click Add App button
-
-Enter App URL: https://github.com/clothshareinfo-cyber/x-electronics-warehouse.git
-
-Complete the Addition - Follow any additional prompts
-
-Installing the App on a Specific Site:
-
-Access Your Sites - Navigate to the Sites section
-
-Select Your Site - Click on the site you want to install on
-
-Install the App - Go to Apps tab → Click Install App
-
-Find X Electronics Warehouse in the list and proceed with installation
-
-Verification and Use:
-
-Verify Installation - Check installed apps list on your ERPNext site
-
-Use the App - Search for "X Item", "X Warehouse", or "Stock Balance" in the awesome bar
-
-Steps for Using the System
-1. Create Products (X Item)
-Go to X Item → Add New
-
-Enter item code, name, and valuation rate
-
-Save
-
-2. Create Warehouses (X Warehouse)
-Go to X Warehouse → Add New
-
-Create parent warehouse (leave parent blank)
-
-Create child warehouses (select parent)
-
-Save each warehouse
-
-3. Add Stock (Receipt)
-Go to X Stock Entry → New
-
-Select Purpose: Receipt
-
-Add items: select product, quantity, rate
-
-Select target warehouse
-
-Save → Submit
-
-4. Move Stock (Transfer)
-Go to X Stock Entry → New
-
-Select Purpose: Transfer
-
-Add items: select product, quantity
-
-Select source and target warehouses
-
-Save → Submit
-
-5. Remove Stock (Consume)
-Go to X Stock Entry → New
-
-Select Purpose: Consume
-
-Add items: select product, quantity
-
-Select source warehouse
-
-Save → Submit
-
-6. View Reports
-Stock Balance Report - See current stock levels
-
-Stock Ledger Report - See all transactions
-
-Testing
-Run Automated Tests
-bash
-bench --site {sitename} run-tests --app x_electronics_warehouse
-Manual Test in Console
-bash
-bench --site {sitename} console
-python
-from frappe.utils import today, nowtime
-
-# Create a test receipt
-receipt = frappe.get_doc({
-    "doctype": "X Stock Entry",
-    "purpose": "Receipt",
-    "posting_date": today(),
-    "posting_time": nowtime(),
-    "items": [{
-        "item": frappe.get_all("X Item")[0].name,
-        "quantity": 100,
-        "rate": 100,
-        "target_warehouse": frappe.get_all("X Warehouse")[0].name
-    }]
-})
-receipt.insert()
-receipt.submit()
-print("✓ Test successful!")
-Verify Stateless Design
-python
-# Check that actual_qty field does NOT exist
-has_actual_qty = frappe.db.exists("DocField", {
-    "parent": "X Stock Ledger Entry",
-    "fieldname": "actual_qty"
-})
-print(f"Stateless: {'✓ PASSED' if not has_actual_qty else '✗ FAILED'}")
-Sample Data
-When installed, you get sample data:
-
-Products
-Product	Quantity	Rate	Total Value
-Gaming Laptop Pro	50	$1,500	$75,000
-Wireless Mouse	50	$75	$3,750
-Mechanical Keyboard	50	$120	$6,000
-27 Inch Monitor	250	$1,150	$287,500
-Total Inventory Value: $372,250
-
-Warehouse Structure
-text
-Main Distribution Center (Parent)
-├── North Zone Warehouse
-├── South Zone Warehouse
-└── East Zone Warehouse
-Requirements Checklist
-Item/Product DocType
-
-Warehouse (Tree) DocType
-
-Stateless Stock Ledger Entry (no actual_qty field)
-
-Moving Average Valuation (Single SQL Query)
-
-Stock Entry - Receipt operation
-
-Stock Entry - Consume operation
-
-Stock Entry - Transfer operation
-
-Stock Ledger Report (movement on each line)
-
-Stock Balance Report (consolidated with moving average)
-
-Unit Tests covering all functionality
 
 Author
 John Kariuki
@@ -342,4 +176,5 @@ GitHub: @clothshareinfo-cyber
 License
 MIT
 
-Built for X Electronics | Complete Warehouse Management Solution
+
+
