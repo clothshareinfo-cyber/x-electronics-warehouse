@@ -1,0 +1,19 @@
+{
+ "content": null,
+ "creation": "2026-05-28 13:51:51.534343",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-05-28 13:51:51.534343",
+ "modified_by": "Administrator",
+ "module": "X Electronics Warehouse",
+ "name": "stock-ledger-view",
+ "owner": "Administrator",
+ "page_name": "stock-ledger-view",
+ "roles": [],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Stock Ledger Report"
+}

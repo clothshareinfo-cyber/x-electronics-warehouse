@@ -1,0 +1,19 @@
+{
+ "content": null,
+ "creation": "2026-05-28 13:51:36.262552",
+ "docstatus": 0,
+ "doctype": "Page",
+ "idx": 0,
+ "modified": "2026-05-28 13:51:36.262552",
+ "modified_by": "Administrator",
+ "module": "X Electronics Warehouse",
+ "name": "stock-balance-view",
+ "owner": "Administrator",
+ "page_name": "stock-balance-view",
+ "roles": [],
+ "script": null,
+ "standard": "Yes",
+ "style": null,
+ "system_page": 0,
+ "title": "Stock Balance Report"
+}
