@@ -1,46 +1,108 @@
 # Warehouse Management System for X Electronics
 
-## What is this?
+Frappe App to manage inventory, track stock movements, and generate stock reports with moving average valuation
 
-This is a complete warehouse management system I built for X Electronics using the Frappe Framework.
+## Introduction
+This app includes functionalities to manage warehouse operations, track stock movements across multiple locations, and generate real-time stock reports. The system uses a **stateless stock ledger** that calculates balances on-demand, avoiding the performance bottlenecks of traditional inventory systems.
 
-It helps track:
-- Products in stock
-- Where products are stored (warehouses)
-- When products come in (receipts)
-- When products go out (consumption)
-- When products move between locations (transfers)
+## Key Features
 
-## Why I built it this way
+### DocTypes
+- **X Item**
+- **X Warehouse**
+- **X Stock Entry**
+- **X Stock Entry Detail**
+- **X Stock Ledger Entry**
 
-**The problem with traditional systems:**
-Most stock systems store the current balance in every transaction. This causes data duplication and can get slow.
+### Reports
+- **Stock Balance Report**
+- **Stock Ledger Report**
 
-**My solution (Stateless):**
-I only store the transactions. The current balance is calculated on the fly. This means:
-- No duplicate data
-- Always accurate
-- Faster performance
-- Easier to fix if something goes wrong
+### Technical Highlights
+- Stateless Stock Ledger (no balance stored)
+- Moving Average Valuation (single SQL query)
+- Tree Warehouse Structure (parent-child hierarchy)
+- Real-time stock calculations
 
-## What's inside
+---
 
-### 5 Main Building Blocks (DocTypes)
+## DocTypes
 
-1. **X Item** - Products you sell (laptops, mice, keyboards, monitors)
-2. **X Warehouse** - Where you keep your stock (can be organized as parent-child)
-3. **X Stock Entry** - Records when stock moves (receipt, transfer, consume)
-4. **X Stock Entry Detail** - The items in each stock movement
-5. **X Stock Ledger Entry** - The transaction log (no balances stored here!)
+### X Item
+Each product in the system should have an X Item record. This stores:
+- Product code and name
+- Description
+- Unit of measure (Nos, Kg, Meter, etc.)
+- Valuation rate (current cost)
 
-### 2 Reports
+### X Warehouse
+Tracks warehouse locations with parent-child hierarchy. Examples:
+- Main Distribution Center (parent)
+  - North Zone Warehouse (child)
+  - South Zone Warehouse (child)
+  - East Zone Warehouse (child)
 
-1. **Stock Balance** - Shows how much of each product is in each warehouse right now
-2. **Stock Ledger** - Shows every transaction with running balance
+Warehouses can be organized in a tree structure for multi-location inventory management.
 
-### Moving Average Pricing
+### X Stock Entry
+Records all stock movements with three purposes:
 
-Instead of storing prices, I use a single SQL query to calculate the average cost:
+**Receipt:** Adding stock to a warehouse
+- Select item, quantity, rate, and target warehouse
+
+**Transfer:** Moving stock between warehouses
+- Select item, quantity, source warehouse, and target warehouse
+
+**Consume:** Removing stock from a warehouse
+- Select item, quantity, and source warehouse
+
+### X Stock Entry Detail
+Child table that holds line items for each stock entry. Includes:
+- Item (link to X Item)
+- Quantity
+- Rate (for receipts)
+- Source warehouse (for transfers/consumption)
+- Target warehouse (for receipts/transfers)
+
+### X Stock Ledger Entry
+**Stateless version** - unlike traditional ERPNext which stores actual_qty, this only records transactions:
+
+- Item (link to X Item)
+- Warehouse (link to X Warehouse)
+- Posting date and time
+- Transaction type (Receipt, Consume, Transfer)
+- Quantity (positive for incoming, negative for outgoing)
+- Incoming rate (for receipts)
+
+No actual_qty field is stored. Balance is calculated on-demand.
+
+---
+
+## Reports
+
+### Stock Balance Report
+Shows current stock levels with moving average valuation.
+
+**Features:**
+- Grouped by item and warehouse
+- Calculates moving average rate
+- Shows total stock value
+- Real-time calculation
+
+### Stock Ledger Report
+Shows all stock movements with running balance.
+
+**Features:**
+- Complete transaction history
+- Running balance per item/warehouse
+- Sortable by date
+- Filterable by item and warehouse
+
+---
+
+## Moving Average Valuation
+
+Moving average is calculated using a **single SQL query**:
 
 ```sql
 SELECT 
@@ -50,150 +112,219 @@ SELECT
              ELSE NULL END) as moving_average_rate
 FROM `tabX Stock Ledger Entry`
 GROUP BY item
-This gives you the weighted average cost of your inventory.
+This ensures:
 
-What you can do
-Add Stock (Receipt)
-When new products arrive at a warehouse, record a Receipt. Enter:
+Only receipts affect the moving average
 
-Which product
+Zero or null rates are ignored
 
-How many
+Weighted average is calculated automatically
 
-Purchase price
+Stateless Design
+Traditional systems store running balances:
 
-Which warehouse
+text
+Transaction: +100 → Balance = 100 (stored)
+Transaction: +50  → Balance = 150 (stored)
+Transaction: -30  → Balance = 120 (stored)
+This system (Stateless):
 
-Move Stock (Transfer)
-When you move products between warehouses, record a Transfer. Enter:
+text
+Only store transactions: +100, +50, -30
+Calculate balance on-demand: SUM(100 + 50 - 30) = 120
+Benefits:
 
-Which product
+No data duplication
 
-How many
+Always accurate
 
-From warehouse
+Faster for large datasets
 
-To warehouse
+Easier to debug
 
-Remove Stock (Consume)
-When products are used or sold, record a Consume. Enter:
+Installation
+Manual Installation
+Install bench
 
-Which product
+Install ERPNext
 
-How many
+Add the app to your bench:
 
-Which warehouse
-
-Sample Data Included
-When you install this app, you'll get sample data:
-
-Products:
-
-Gaming Laptop Pro - $1,500 each (50 units)
-
-Wireless Mouse - $75 each (50 units)
-
-Mechanical Keyboard - $120 each (50 units)
-
-27 Inch Monitor - $1,150 each (250 units)
-
-Total value of all stock: $372,250
-
-Warehouses:
-
-Main Distribution Center (parent)
-
-North Zone Warehouse (child)
-
-South Zone Warehouse (child)
-
-East Zone Warehouse (child)
-
-How to install
 bash
-# Get the app
 bench get-app https://github.com/clothshareinfo-cyber/x-electronics-warehouse.git
+Install the app on your site:
 
-# Install on your site
-bench --site your-site.local install-app x_electronics_warehouse
+bash
+bench --site {sitename} install-app x_electronics_warehouse
+Replace {sitename} with the name of your site
 
-# Update the database
+Migrate and restart:
+
+bash
 bench migrate
-
-# Restart the server
 bench restart
-How to test
-Run this command to test everything works:
+Frappe Cloud Installation
+Adding the App to Your Bench:
 
+Log Into Frappe Cloud Dashboard - Access your account on Frappe Cloud
+
+Navigate to your Bench Apps Section - Click on the Apps tab
+
+Add New App - Click Add App button
+
+Enter App URL: https://github.com/clothshareinfo-cyber/x-electronics-warehouse.git
+
+Complete the Addition - Follow any additional prompts
+
+Installing the App on a Specific Site:
+
+Access Your Sites - Navigate to the Sites section
+
+Select Your Site - Click on the site you want to install on
+
+Install the App - Go to Apps tab → Click Install App
+
+Find X Electronics Warehouse in the list and proceed with installation
+
+Verification and Use:
+
+Verify Installation - Check installed apps list on your ERPNext site
+
+Use the App - Search for "X Item", "X Warehouse", or "Stock Balance" in the awesome bar
+
+Steps for Using the System
+1. Create Products (X Item)
+Go to X Item → Add New
+
+Enter item code, name, and valuation rate
+
+Save
+
+2. Create Warehouses (X Warehouse)
+Go to X Warehouse → Add New
+
+Create parent warehouse (leave parent blank)
+
+Create child warehouses (select parent)
+
+Save each warehouse
+
+3. Add Stock (Receipt)
+Go to X Stock Entry → New
+
+Select Purpose: Receipt
+
+Add items: select product, quantity, rate
+
+Select target warehouse
+
+Save → Submit
+
+4. Move Stock (Transfer)
+Go to X Stock Entry → New
+
+Select Purpose: Transfer
+
+Add items: select product, quantity
+
+Select source and target warehouses
+
+Save → Submit
+
+5. Remove Stock (Consume)
+Go to X Stock Entry → New
+
+Select Purpose: Consume
+
+Add items: select product, quantity
+
+Select source warehouse
+
+Save → Submit
+
+6. View Reports
+Stock Balance Report - See current stock levels
+
+Stock Ledger Report - See all transactions
+
+Testing
+Run Automated Tests
 bash
-bench --site your-site.local run-tests --app x_electronics_warehouse
-Or test manually:
-
+bench --site {sitename} run-tests --app x_electronics_warehouse
+Manual Test in Console
 bash
-bench --site your-site.local console
-Then try:
-
+bench --site {sitename} console
 python
 from frappe.utils import today, nowtime
 
-# Add 100 laptops to main warehouse
+# Create a test receipt
 receipt = frappe.get_doc({
     "doctype": "X Stock Entry",
     "purpose": "Receipt",
     "posting_date": today(),
     "posting_time": nowtime(),
     "items": [{
-        "item": "LAPTOP-PRO",
+        "item": frappe.get_all("X Item")[0].name,
         "quantity": 100,
-        "rate": 1500,
-        "target_warehouse": "Main Distribution Center"
+        "rate": 100,
+        "target_warehouse": frappe.get_all("X Warehouse")[0].name
     }]
 })
 receipt.insert()
 receipt.submit()
-print("Stock added!")
-How to use in your browser
-Go to http://localhost:8000
+print("✓ Test successful!")
+Verify Stateless Design
+python
+# Check that actual_qty field does NOT exist
+has_actual_qty = frappe.db.exists("DocField", {
+    "parent": "X Stock Ledger Entry",
+    "fieldname": "actual_qty"
+})
+print(f"Stateless: {'✓ PASSED' if not has_actual_qty else '✗ FAILED'}")
+Sample Data
+When installed, you get sample data:
 
-Login as Administrator
+Products
+Product	Quantity	Rate	Total Value
+Gaming Laptop Pro	50	$1,500	$75,000
+Wireless Mouse	50	$75	$3,750
+Mechanical Keyboard	50	$120	$6,000
+27 Inch Monitor	250	$1,150	$287,500
+Total Inventory Value: $372,250
 
-In the search bar, type:
+Warehouse Structure
+text
+Main Distribution Center (Parent)
+├── North Zone Warehouse
+├── South Zone Warehouse
+└── East Zone Warehouse
+Requirements Checklist
+Item/Product DocType
 
-X Item - to see/add products
+Warehouse (Tree) DocType
 
-X Warehouse - to see/add warehouses
+Stateless Stock Ledger Entry (no actual_qty field)
 
-X Stock Entry - to record stock movements
+Moving Average Valuation (Single SQL Query)
 
-Stock Balance - to see current stock
+Stock Entry - Receipt operation
 
-Stock Ledger - to see all transactions
+Stock Entry - Consume operation
 
-What I completed
-✅ Product master (X Item)
+Stock Entry - Transfer operation
 
-✅ Warehouse with parent-child structure (X Warehouse)
+Stock Ledger Report (movement on each line)
 
-✅ Stock movements (Receipt, Transfer, Consume)
+Stock Balance Report (consolidated with moving average)
 
-✅ Stateless stock ledger (no balances stored)
+Unit Tests covering all functionality
 
-✅ Moving average pricing (single SQL query)
-
-✅ Stock Balance report
-
-✅ Stock Ledger report
-
-✅ All features tested
-
-Need help?
-Check the Frappe Documentation or open an issue on GitHub.
-
-About the author
+Author
 John Kariuki
 
 GitHub: @clothshareinfo-cyber
 
 License
-MIT - Free to use for anything
+MIT
 
+Built for X Electronics | Complete Warehouse Management Solution
