@@ -136,22 +136,18 @@ This system (Stateless):
 text
 Only store transactions: +100, +50, -30
 Calculate balance on-demand: SUM(100 + 50 - 30) = 120
+
+
 Benefits:
-
-No data duplication
-
-Always accurate
-
-Faster for large datasets
-
-Easier to debug
+.No data duplication
+.Always accurate
+.Faster for large datasets
+.Easier to debug
 
 Installation
-Manual Installation
+                          Manual Installation
 Install bench
-
 Install ERPNext
-
 Add the app to your bench:
 
 bash
